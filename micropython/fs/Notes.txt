@@ -1,0 +1,2 @@
+Maybe counting total vibrations is easier/ faster to interpret than ABCD system? (2 short buzzes for B, 7 for G, etc)
+implement a much cleaner state machine for vibrator and states
