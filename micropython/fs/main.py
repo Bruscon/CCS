@@ -71,7 +71,7 @@ class Vibrator :
         self.SHORT_INT = .13
         self.LONG_INT = .3
         
-        self.disable_serial() #REMOVE                               #REMOVE
+        self.disable_serial()
         
     def disable_serial(self):
         self.vib1 = machine.Pin(1, machine.Pin.OUT)
@@ -102,7 +102,11 @@ class Vibrator :
                     if self.vibq[0] in ['B','E']:
                         self.vibdeadline = tme + (self.LONG_INT *US_TO_S)
                     else:
-                        self.vibdeadline = tme + (self.SHORT_INT *US_TO_S)        
+                        self.vibdeadline = tme + (self.SHORT_INT *US_TO_S)
+                if self.vibq[0] in ["_"]: #pause
+                    self.vib1.off()
+                    self.vib2.off()
+                    self.vibdeadline = tme + (self.SHORT_INT * US_TO_S)
                 self.vibstep = 1
             
             else:
@@ -180,7 +184,12 @@ time.sleep(.1)
 
 print('Connecting to wifi')
 do_connect()
+for i in range(10):
+    print(i)
+    time.sleep(1)
+print("connected, attempting socket")
 soc = Soc()
+print("done, launching vibrator")
 vib = Vibrator()
 xoffset, yoffset, zoffset, G_cal, resting_ypr = calib_IMU(50)
 fusion_ypr = resting_ypr.copy()
@@ -246,11 +255,16 @@ while(1):
                 command.append('D')
                 vib.send(command[-1])
                 state = 'return to flat'
-            if fusion_ypr[2] - resting_ypr[2] > 15:
+            elif fusion_ypr[2] - resting_ypr[2] > 18:
                 command.append("E")
                 vib.send('E')
                 state = 'get secondary input'
-        if fusion_ypr[2] - resting_ypr[2] < -50:
+                print("starting E")
+            elif fusion_ypr[2] - resting_ypr[2] < -30:
+                command.append("F")
+                vib.send('F')
+                state = 'get secondary input'
+        if fusion_ypr[2] - resting_ypr[2] < -70:
             vib.send('F')
             command = []
             if not paused:
@@ -263,34 +277,49 @@ while(1):
             
     if state == 'return to flat':
         if ( abs(fusion_ypr[1] - resting_ypr[1]) < 9 ) and \
-           ( abs(fusion_ypr[2] - resting_ypr[2]) < 13 ) and \
+           ( abs(fusion_ypr[2] - resting_ypr[2]) < 9 ) and \
            ( zgy > -4000 ) and ( zgy < 4000 ) :
             state = 'get primary input'
             
     if state == 'get secondary input':
+        print( (fusion_ypr[0] - resting_ypr[0]), (fusion_ypr[1] - resting_ypr[1]), (fusion_ypr[2] - resting_ypr[2]) )
         if ( abs(fusion_ypr[1] - resting_ypr[1]) < 9 ) and \
-           ( abs(fusion_ypr[2] - resting_ypr[2]) < 13 ) and \
+           ( abs(fusion_ypr[2] - resting_ypr[2]) < 9 ) and \
            ( zgy > -4000 ) and ( zgy < 4000 ) :
+            print("flat")
             print( "input: ", command[-1] )
             state = 'get primary input'
-            
+
         elif command[-1] == "E":
             if fusion_ypr[1] - resting_ypr[1] < -30.0:
-                print('input:   K')
+                print('input:  DELETE')
                 command.pop(-1)
-                command.append('K')
+                if len(command) > 0:
+                    command.pop(-1)
                 vib.send("A")
                 state = 'return to flat'
             elif fusion_ypr[1] - resting_ypr[1] > 2.0:
-                print('input:  L')
-                command.pop(-1)
-                command.append('L')
+                print('input: CLEAR')
+                command = []
                 vib.send("B")
                 state = 'return to flat'
-        
-        
+
+        elif command[-1] == "F":
+            if fusion_ypr[1] - resting_ypr[1] < -20.0:
+                print('input:   G')
+                command.pop(-1)
+                command.append('G')
+                vib.send("A")
+                state = 'return to flat'
+            elif fusion_ypr[1] - resting_ypr[1] > 8.0:
+                print('input:  H')
+                command.pop(-1)
+                command.append('H')
+                vib.send("B")
+                state = 'return to flat'
+
         elif command[-1] == 'A':
-            if zgy < -15000:
+            if zgy < -18000:
                 print("Sending command")
                 state = 'send command'
                 command.pop(-1)
@@ -304,7 +333,7 @@ while(1):
                 command = []
                 vib.send("F")
                 state = 'return to flat'
-        
+
         elif command[-1] == 'B':
             if zgy < -7000:
                 print("input:  I")
@@ -317,7 +346,7 @@ while(1):
                 command.append("J")
                 vib.send(["B","D"])
                 state = 'return to flat'
-                
+
         
             
     if state == 'send command':

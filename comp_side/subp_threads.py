@@ -4,16 +4,16 @@ Created on Thu Mar  4 19:16:10 2021
 
 @author: Nick Brusco
 """
-
+"""
 import wexpect, sys, os
 
 
 child = wexpect.spawn("python test.py")
 child.expect("Running")
 child.sendline("poop")
+"""
 
 
-'''
 import threading
 
 class ThreadWorker(threading.Thread):
@@ -37,7 +37,7 @@ class ThreadWorker(threading.Thread):
 
 
 if __name__ == "__main__":
-    import os, sys, subprocess, threading, time
+    import os, sys, subprocess, threading, time, pexpect
     from subprocess import Popen, PIPE
 
     def worker(pipe):
@@ -46,11 +46,20 @@ if __name__ == "__main__":
             if line == '': break
             else: print( line )
 
+    #proc = Popen("wine ~/Downloads/lc0-v0.27.0-windows-cpu-dnnl/lc0.exe", universal_newlines = True, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    #proc = Popen("python3 ~/Documents/projs/CCS/comp_side/ifw.py", universal_newlines=True, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    proc = pexpect.spawn("python3 ~/Documents/projs/CCS/comp_side/ifw.py")
 
-    read, write = os.pipe()
+    proc.expect("it fuckin worked")
+    proc.sendline("go nodes 100")
 
-    #proc = Popen("C:\\Users\\Nick Brusco\\Documents\\projs\\ccs\\lc0\\lc0.exe", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    proc = Popen("C:\\Users\\Nick Brusco\\Documents\\projs\\ccs\\comp_side\\test.py", universal_newlines = True, shell=True, stdin=read, stdout=PIPE, stderr=PIPE)
+    breakpoint()
+
+    time.sleep(2)
+    d = proc.communicate(input = "go nodes 100")
+    time.sleep(2)
+
+    breakpoint()
 
     stdout_worker = ThreadWorker(worker, proc.stdout)
     stderr_worker = ThreadWorker(worker, proc.stderr)
@@ -60,5 +69,5 @@ if __name__ == "__main__":
 
     while True: 
         time.sleep(1)
-        os.write(read, "go nodes 100")
-'''
+        proc.stdin.write("go nodes 100")
+        breakpoint()
