@@ -2,13 +2,22 @@ import socket, select, time, ches, interpret, encoder
 
 def reconnect():
     soc = socket.socket()
+    soc.settimeout(5)
     soc.connect(("192.168.0.118", 80))
     # soc.send(bytes("sup", encoding = 'utf8'))
     print("recieved from ESP: ", soc.recv(1024))
+    soc.settimeout(None)
     return soc
 
 game = ches.Ches()
-soc = reconnect()
+while 1:
+    try:
+        soc = reconnect()
+        break
+    except:
+        print("Waiting for ESP...")
+        continue
+
 square = ''
 
 print("\n\n")

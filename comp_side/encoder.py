@@ -27,6 +27,7 @@ def encode(data):
             return
 
         if i in [1,3]:
+            vibsym += '_'
             encoded.append(vibsym)
             vibsym = '_'
         else:

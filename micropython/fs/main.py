@@ -1,4 +1,4 @@
-import time, machine, struct, math, socket, gc, select
+import time, machine, struct, math, socket, gc
 
 #hard-coded registers:
 MPU6050_RA_PWR_MGMT_1 = 0x6B
@@ -14,7 +14,7 @@ RAD_TO_DEG  = 180 / math.pi
 fusion_ypr  =    [0.0, 0.0, 0.0]
 target_period = .01 #seconds
 command = []
-state = 'get primary input'
+state = 'get 1st in'
 paused = False
 not_GH_yet = False
 
@@ -28,18 +28,13 @@ class Soc :
         self.conn, self.addr = self.soc.accept()
         self.conn.settimeout(0)
         #time.sleep(.4)
-        #print("recieved message from desktop: ", self.conn.recv(1024))
+        #print("Msg from desktop: ", self.conn.recv(1024))
         self.conn.sendall("ready")
         
     def send_command(self):
         gc.collect()
         self.conn.sendall(str(command))
         self.st = time.ticks_us()
-        
-    def send_heartbeat(self):
-        self.st = time.ticks_us()
-        self.conn.sendall('h')
-        print('heartbeat sent')
         
     def rx(self,vib):
         try:
@@ -141,7 +136,7 @@ class Vibrator :
         
         
 def calib_IMU(samples):
-    print('Calibrating IMU...')
+    print('Calib IMU...')
     xoffset, yoffset, zoffset, G_cal = 0, 0, 0, 0
     xac, yac, zac = 0,0,0
     resting_ypr = [0,0,0]
@@ -182,16 +177,10 @@ time.sleep(.5)
 i2c.writeto_mem(MPU, MPU6050_RA_CONFIG, bytearray(0b00000001))  #set DLPF to 1
 time.sleep(.1)
 
-print('Connecting to wifi')
-do_connect()
-for i in range(10):
-    print(i)
-    time.sleep(1)
-print("connected, attempting socket")
+
 soc = Soc()
-print("done, launching vibrator")
 vib = Vibrator()
-xoffset, yoffset, zoffset, G_cal, resting_ypr = calib_IMU(50)
+xoffset, yoffset, zoffset, G_cal, resting_ypr = calib_IMU(100)
 fusion_ypr = resting_ypr.copy()
 print('Ready')
 
@@ -235,125 +224,133 @@ while(1):
     #print( round(fusion_ypr[1]- resting_ypr[1]), " ", round(fusion_ypr[2]- resting_ypr[2]), " ", round(zgy/1000) )
     
     #state machine
-    if state == 'get primary input':
-        if not paused:
+    if paused:
+        print(fusion_ypr[2] - resting_ypr[2])
+        if fusion_ypr[2] - resting_ypr[2] < -50:
+            vib.send('F')
+            command = []
+            print('Unpaused')
+            paused = False
+            state = 'to flat'
+    else:
+        if state == 'get 1st in':
             if fusion_ypr[1] - resting_ypr[1] < -14.0 and (fusion_ypr[2] - resting_ypr[2]) < 7:
                 command.append('A')
                 vib.send(command[-1])
-                state = 'get secondary input'
-            elif fusion_ypr[1] - resting_ypr[1] > 9.5 and abs(fusion_ypr[2] - resting_ypr[2]) < 7:
+                state = 'get 2nd in'
+            elif fusion_ypr[1] - resting_ypr[1] > 9.5 and abs(fusion_ypr[2] - resting_ypr[2]) < 9:
                 command.append('B')
                 vib.send(command[-1])
-                state = 'get secondary input'
+                state = 'get 2nd in'
             elif zgy < -15000:
                 print('input:  C')
                 command.append('C')
                 vib.send(command[-1])
-                state = 'return to flat'
+                state = 'to flat'
             elif zgy > 15000:
                 print('input:  D')
                 command.append('D')
                 vib.send(command[-1])
-                state = 'return to flat'
+                state = 'to flat'
             elif fusion_ypr[2] - resting_ypr[2] > 18:
                 command.append("E")
                 vib.send('E')
-                state = 'get secondary input'
+                state = 'get 2nd in'
                 print("starting E")
             elif fusion_ypr[2] - resting_ypr[2] < -30:
                 command.append("F")
                 vib.send('F')
-                state = 'get secondary input'
-        if fusion_ypr[2] - resting_ypr[2] < -70:
-            vib.send('F')
-            command = []
-            if not paused:
-                print("Pausing until next F")
-                paused = True
-            else:
-                print('Unpaused')
-                paused = False
-            state = 'return to flat'
-            
-    if state == 'return to flat':
-        if ( abs(fusion_ypr[1] - resting_ypr[1]) < 9 ) and \
-           ( abs(fusion_ypr[2] - resting_ypr[2]) < 9 ) and \
-           ( zgy > -4000 ) and ( zgy < 4000 ) :
-            state = 'get primary input'
-            
-    if state == 'get secondary input':
-        print( (fusion_ypr[0] - resting_ypr[0]), (fusion_ypr[1] - resting_ypr[1]), (fusion_ypr[2] - resting_ypr[2]) )
-        if ( abs(fusion_ypr[1] - resting_ypr[1]) < 9 ) and \
-           ( abs(fusion_ypr[2] - resting_ypr[2]) < 9 ) and \
-           ( zgy > -4000 ) and ( zgy < 4000 ) :
-            print("flat")
-            print( "input: ", command[-1] )
-            state = 'get primary input'
+                state = 'get 2nd in'
 
-        elif command[-1] == "E":
-            if fusion_ypr[1] - resting_ypr[1] < -30.0:
-                print('input:  DELETE')
-                command.pop(-1)
-                if len(command) > 0:
+
+        if state == 'to flat':
+            if ( abs(fusion_ypr[1] - resting_ypr[1]) < 9 ) and \
+               ( abs(fusion_ypr[2] - resting_ypr[2]) < 9 ) and \
+               ( zgy > -4000 ) and ( zgy < 4000 ) :
+                state = 'get 1st in'
+
+        if state == 'get 2nd in':
+            if ( abs(fusion_ypr[1] - resting_ypr[1]) < 9 ) and \
+            ( abs(fusion_ypr[2] - resting_ypr[2]) < 9 ) and \
+            ( zgy > -4000 ) and ( zgy < 4000 ) :
+                print( "input: ", command[-1] )
+                state = 'get 1st in'
+
+            elif command[-1] == "E":
+                if fusion_ypr[1] - resting_ypr[1] < -30.0:
+                    print('input:  DELETE')
                     command.pop(-1)
-                vib.send("A")
-                state = 'return to flat'
-            elif fusion_ypr[1] - resting_ypr[1] > 2.0:
-                print('input: CLEAR')
-                command = []
-                vib.send("B")
-                state = 'return to flat'
+                    if len(command) > 0:
+                        command.pop(-1)
+                    vib.send("A")
+                    state = 'to flat'
+                elif fusion_ypr[1] - resting_ypr[1] > 2.0:
+                    print('input: CLEAR')
+                    command = []
+                    vib.send("B")
+                    state = 'to flat'
 
-        elif command[-1] == "F":
-            if fusion_ypr[1] - resting_ypr[1] < -20.0:
-                print('input:   G')
-                command.pop(-1)
-                command.append('G')
-                vib.send("A")
-                state = 'return to flat'
-            elif fusion_ypr[1] - resting_ypr[1] > 8.0:
-                print('input:  H')
-                command.pop(-1)
-                command.append('H')
-                vib.send("B")
-                state = 'return to flat'
+            elif command[-1] == "F":
+                if fusion_ypr[1] - resting_ypr[1] < -17.0:
+                    print('input:   G')
+                    command.pop(-1)
+                    command.append('G')
+                    vib.send("A")
+                    state = 'to flat'
+                elif fusion_ypr[1] - resting_ypr[1] > 10.0:
+                    print('input:  H')
+                    command.pop(-1)
+                    command.append('H')
+                    vib.send("B")
+                    state = 'to flat'
 
-        elif command[-1] == 'A':
-            if zgy < -18000:
-                print("Sending command")
-                state = 'send command'
-                command.pop(-1)
-            elif zgy > 15000:
-                print("Repeating last")
-                soc.repeat_last(vib)
-                command.pop(-1)
-                state = 'return to flat'
-            elif fusion_ypr[2] - resting_ypr[2] < -45:
-                print("clearing command")
-                command = []
-                vib.send("F")
-                state = 'return to flat'
+                if fusion_ypr[2] - resting_ypr[2] < -70:
+                    vib.send('F')
+                    command = []
+                    print("Paused")
+                    paused = True
+                    state = 'to flat'
 
-        elif command[-1] == 'B':
-            if zgy < -7000:
-                print("input:  I")
-                command.append("I")
-                vib.send(["B","C"])
-                state = 'return to flat'
-            elif zgy > 7000:
-                print("input:  J")
-                command.pop(-1)
-                command.append("J")
-                vib.send(["B","D"])
-                state = 'return to flat'
+            elif command[-1] == 'A':
+                if zgy < -18000:
+                    print("Sending command")
+                    state = 'send command'
+                    command.pop(-1)
+                elif zgy > 15000:
+                    print("Repeating last")
+                    soc.repeat_last(vib)
+                    command.pop(-1)
+                    state = 'to flat'
+                elif fusion_ypr[2] - resting_ypr[2] < -45:
+                    print("clearing command")
+                    command = []
+                    vib.send("F")
+                    state = 'to flat'
 
-        
-            
-    if state == 'send command':
-        print("command: ", command)
-        soc.send_command()
-        command = []
-        state = 'return to flat'
+            elif command[-1] == 'B':
+                if zgy < -7000:
+                    print("input:  I")
+                    vib.send(["F","F"])
+                    command = []
+                    print("Paused")
+                    paused = True
+                    state = 'to flat'
+
+                elif zgy > 7000:
+                    print("input:  J")
+                    command.pop(-1)
+                    time.sleep(2)
+                    calib_IMU(100)
+                    vib.send(["E","E"])
+                    state = 'to flat'
+
+
+
+        if state == 'send command':
+            print("command: ", command)
+            soc.send_command()
+            command = []
+            state = 'to flat'
         
         
  
