@@ -18,4 +18,8 @@ def do_connect():
 
 do_connect()
 gc.collect()
- 
+
+
+for i in range(10):
+    print(i)
+    time.sleep(.7)
