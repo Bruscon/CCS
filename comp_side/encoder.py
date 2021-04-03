@@ -7,21 +7,21 @@ def encode(data):
     while i<4:
         symbol = data[i]
         if symbol in ["a", "1"]:
-            vibsym += ("A")
+            vibsym += ("a")
         elif symbol in ["b", "2"]:
-            vibsym += ("AA")
+            vibsym += ("aa")
         elif symbol in ["c", "3"]:
-            vibsym += ("AAA")
+            vibsym += ("aaa")
         elif symbol in ["d", "4"]:
-            vibsym += ("AAAA")
+            vibsym += ("aaaa")
         elif symbol in ["e", "5"]:
             vibsym += ("B")
         elif symbol in ["f", "6"]:
-            vibsym += ("BB")
+            vibsym += ("Bb")
         elif symbol in ["g", "7"]:
-            vibsym += ("BBB")
+            vibsym += ("Bbb")
         elif symbol in ["h", "8"]:
-            vibsym += ("BBBB")
+            vibsym += ("Bbbb")
         else:
             print("ERROR")
             return

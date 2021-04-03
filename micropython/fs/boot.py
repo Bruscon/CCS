@@ -22,4 +22,4 @@ gc.collect()
 
 for i in range(10):
     print(i)
-    time.sleep(.7)
+    time.sleep(.3)

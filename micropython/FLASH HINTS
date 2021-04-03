@@ -1,0 +1,14 @@
+FLASH / AMPY NOTES
+
+YOU NEED A COMMON GROUND BETWEEN THE DEVICE AND THE USB - UART DEVICE
+THE PINS MARKED Y are REQUIRED:
+
+
+TX // GND (for com4 you can use external source, not com5)
+HIGH // dont care
+dont care // LOW
+POWER // RX (esp rx, USB Tx)
+
+
+
+ampy --port COM4 put boot.py

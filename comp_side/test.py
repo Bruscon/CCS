@@ -56,11 +56,7 @@ while (1):
         reply = soc.recv(1024).decode("utf-8").strip('][').replace('\'', '').replace(' ', '').replace(',', '')
         move = interpret.interpret(reply, soc)
         if move == -1: continue
-        if len(move) == 2:
-            reply = soc.recv(1024).decode("utf-8").strip('][').replace('\'', '').replace(' ', '').replace(',', '')
-            move2 = interpret.interpret(reply)
-            if move2 == -1: continue
-            move = move + move2
+
         print(move)
         valid = game.sendmove(move.lower())
         game.brd()
