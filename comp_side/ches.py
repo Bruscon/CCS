@@ -17,7 +17,7 @@ class Ches:
 
     def getmove(self):
         self.leela.expect("bestmove")
-        move = str(self.leela.readline()).split()[1]
+        move = str(self.leela.readline()).split()[1][:4]
         self.board.push_san(move)
         return(move)
 

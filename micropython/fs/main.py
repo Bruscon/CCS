@@ -15,7 +15,7 @@ fusion_ypr  =    [0.0, 0.0, 0.0]
 target_period = .01 #seconds
 command = []
 state = '1st'
-paused = False
+paused = True
 
 
 class Soc :
@@ -255,7 +255,10 @@ while(1):
             if ( abs(fusion_ypr[1] - resting_ypr[1]) < 4 ) and \
                ( abs(fusion_ypr[2] - resting_ypr[2]) < 5 ) and \
                ( zgy > -4000 ) and ( zgy < 4000 ) :
-                state = '1st'
+                if len(command) >= 4:
+                    state = 'snd cmd'
+                else:
+                    state = '1st'
 
         if state == '2nd':
             if ( abs(fusion_ypr[1] - resting_ypr[1]) < 4 ) and \
@@ -263,14 +266,18 @@ while(1):
             ( zgy > -4000 ) and ( zgy < 4000 ) :
                 print( "in: ", command[-1] )
                 if command[-1] == 'C':
-                    vib.send(['a','a','a'])
+                    vib.send('A')
                 if command[-1] == 'D':
-                    vib.send(['a','a','a','a'])
+                    vib.send('A')
                 if command[-1] == 'E':
-                    vib.send(['B'])
+                    vib.send('B')
                 if command[-1] == 'F':
-                    vib.send(['B','b'])
-                state = '1st'
+                    vib.send('B')
+                
+                if len(command) >= 4:
+                    state = 'snd cmd'
+                else:
+                    state = '1st'
 
             elif command[-1] == "C":
                 if fusion_ypr[1] - resting_ypr[1] < -15.0:
@@ -283,7 +290,7 @@ while(1):
                     print("in: B")
                     command.pop(-1)
                     command.append('B')
-                    vib.send(['a','a'])
+                    vib.send(['a'])
                     state = 'flt'
 
             elif command[-1] == "F":
@@ -291,13 +298,13 @@ while(1):
                     print('in: G')
                     command.pop(-1)
                     command.append('G')
-                    vib.send(['B','b','b'])
+                    vib.send(['B'])
                     state = 'flt'
                 elif fusion_ypr[1] - resting_ypr[1] > 5.0:
                     print('in: H')
                     command.pop(-1)
                     command.append('H')
-                    vib.send(['B','b','b','b'])
+                    vib.send(['B'])
                     state = 'flt'
 
             elif command[-1] == 'D':
