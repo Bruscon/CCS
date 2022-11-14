@@ -11,8 +11,8 @@ def do_connect():
     if not sta_if.isconnected():
         print('connecting to network...')
         sta_if.active(True)
-        #sta_if.connect('EAC8F5', 'thedarkknight')
-        sta_if.connect('Fios-J2m9Y', 'mod439coot532owl')
+        #PUT YOUR WIFI CREDENTIALS HERE:
+        sta_if.connect('NAME', 'PASSWORD')
         while not sta_if.isconnected():
             pass
     print('network config:', sta_if.ifconfig())

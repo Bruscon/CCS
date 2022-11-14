@@ -160,10 +160,11 @@ def calib_IMU(samples):
     print(resting_ypr)
     return xoffset, yoffset, zoffset, G_cal, resting_ypr
 
+
 #start I2C with MPU6050
 i2c = machine.I2C(scl=machine.Pin(0), sda=machine.Pin(2), freq = 400000)
 
-i2c.writeto_mem(MPU, MPU6050_RA_PWR_MGMT_1, bytearray(0x80) )   #reset device
+i2c.writeto_mem(MPU, MPU6050_RA_PWR_MGMT_1, bytearray(0x80) )   #reset device   
 time.sleep(.1)
 i2c.writeto_mem(MPU, MPU6050_RA_PWR_MGMT_1, bytearray(0x01) )   #wake-up, set Xgyro as clk
 time.sleep(.3)
