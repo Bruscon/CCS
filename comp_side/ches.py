@@ -4,14 +4,27 @@ Created on Tue Mar  2 20:10:55 2021
 
 @author: Nick Brusco
 """
-import chess, time, pexpect
+import chess, time, os
 
 class Ches:
     def __init__(self):
 
-        self.board = chess.Board()
-        self.leela= pexpect.spawn('wine lc0/lc0.exe')
+        if ( os.name == 'nt'): #If we're running on windows
+            import wexpect
+            self.is_windows = True
+        else:
+            import pexpect
+            self.is_windows = False
+
+        
+        if (not self.is_windows):
+            self.leela= pexpect.spawn('wine lc0/lc0.exe')
+        else:
+            self.leela= wexpect.spawn('../lc0/lc0.exe')
+        
         self.leela.expect('(s).')
+
+        self.board = chess.Board()
         time.sleep(.3)
         #self.leela.send('go nodes 100\r\n')
 

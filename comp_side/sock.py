@@ -10,7 +10,7 @@ import ches
 
 def reconnect():
     soc = socket.socket()
-    soc.connect(("192.168.0.118", 80))
+    soc.connect(("192.168.0.111", 80))
     #soc.send(bytes("sup", encoding = 'utf8'))
     print("recieved from ESP: ", soc.recv(1024))
     return soc

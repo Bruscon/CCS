@@ -33,14 +33,13 @@ def invert_letter(letter):
 
 def reconnect():
     soc = socket.socket()
-    soc.settimeout(5)
-    soc.connect(("192.168.1.191", 80))
+    soc.settimeout(2)
+    soc.connect(("192.168.0.202", 80))
     # soc.send(bytes("sup", encoding = 'utf8'))
     print("recieved from ESP: ", soc.recv(1024))
     soc.settimeout(None)
     return soc
 
-game = ches.Ches()
 while 1:
     try:
         soc = reconnect()
@@ -49,6 +48,7 @@ while 1:
         print("Waiting for ESP...")
         continue
 
+game = ches.Ches()
 print("\n\n")
 msg = "FF"
 try:

@@ -1,0 +1,21 @@
+<QucsStudio Layout 4.3.1>
+<Properties>
+DataSet=pcb_data.dat
+DataDisplay=pcb_display.dpl
+OpenDisplay=1
+Grid=0.1 mm
+Mesh=20
+Excite=2|0.0001|4000
+Frequency=0.1 GHz|8 GHz|2000
+Boundary=8.74mm|3mm|2
+Substrate=FR4|4.6|0.25 mm|2e-4|1.72e-8|35 µm|0.15 µm|1|0|0/0/10mm/10mm
+Radiation=0|1 GHz|81|41|4
+</Properties>
+<Items>
+Rectangle MS1 0 0 0|0|0.02|0.0004
+Rectangle MS4 0.02 0 0|0|0.0004|0.0004
+Rectangle MS2 0.0204 0 0|0|0.02|0.0004
+Rectangle MS3 0.02 0.0104 0|-0.01|0.0004|0.01
+Lumped P1 0 0.0002 1 2 50 0 0.0004 0
+Lumped P2 0.0404 0.0002 2 2 50 0 0.0004 0
+</Items>

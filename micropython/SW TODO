@@ -1,0 +1,7 @@
+SW TODO
+
+thread the comp_side server so that you can keyboard interrupt it while running
+Have the computer connect to the CCS's wifi network
+Move motion processing to comp_side
+move I2C to new pins
+Can we move sensor fusion onto the ICM? No.
